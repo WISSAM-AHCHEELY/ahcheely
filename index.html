@@ -19,7 +19,7 @@
 <script>
 (function () {
   var box = document.getElementById('errbox');
-  var FAIL = 'تعذّر تشغيل التطبيق. حدّث الصفحة، وإن تكرر الأمر فالمشكلة في ملفات التطبيق.';
+  var FAIL = 'تعذّر تشغيل التطبيق. تحقق من اتصالك وحدّث الصفحة، وإن استمر ذلك فحاول لاحقاً.';
   var SLOW = 'التطبيق يتأخر عن المعتاد، وقد يكون اتصالك بطيئاً. إن استمر ذلك فحدّث الصفحة.';
   function show(text, kind) {
     if (!box.hidden && box.getAttribute('data-kind') !== 'boot') return;
@@ -27,20 +27,18 @@
     box.setAttribute('data-kind', kind);
     box.hidden = false;
   }
-  window.addEventListener('error', function (e) {
-    if (window.__ahcheelyBooted) return;
-    var t = e.target;
-    if (t && t.tagName === 'SCRIPT') {
-      if (/\/app\.js(\?|$)/.test(t.src || '')) show(FAIL, 'load');
-    } else if (t === window) {
-      show(FAIL, 'boot');
-    }
-  }, true);
-  setTimeout(function () {
+  var timer = setTimeout(function () {
     if (!window.__ahcheelyBooted && box.hidden) show(SLOW, 'boot');
   }, 8000);
+  import('./app.js').then(function () {
+    clearTimeout(timer);
+    if (box.getAttribute('data-kind') === 'boot') box.hidden = true;
+  }, function (err) {
+    console.error('[أحچيلي] تعذّر تحميل التطبيق', err);
+    clearTimeout(timer);
+    show(FAIL, 'load');
+  });
 })();
 </script>
-<script type="module" src="app.js"></script>
 </body>
 </html>
