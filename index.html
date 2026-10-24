@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c8102e">
+<title>أحچيلي</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="#/">أحچيلي</a>
+  <span class="badge">نسخة تأسيسية</span>
+</header>
+<noscript><div class="mock">يتطلب أحچيلي تفعيل JavaScript.</div></noscript>
+<main id="view" tabindex="-1"></main>
+<nav class="tabs" id="tabs" aria-label="التنقل"></nav>
+<div id="errbox" role="alert" hidden></div>
+<script>
+(function () {
+  var box = document.getElementById('errbox');
+  var FAIL = 'تعذّر تشغيل التطبيق. حدّث الصفحة، وإن تكرر الأمر فالمشكلة في ملفات التطبيق.';
+  var SLOW = 'التطبيق يتأخر عن المعتاد، وقد يكون اتصالك بطيئاً. إن استمر ذلك فحدّث الصفحة.';
+  function show(text, kind) {
+    if (!box.hidden && box.getAttribute('data-kind') !== 'boot') return;
+    box.textContent = text;
+    box.setAttribute('data-kind', kind);
+    box.hidden = false;
+  }
+  window.addEventListener('error', function (e) {
+    if (window.__ahcheelyBooted) return;
+    var t = e.target;
+    if (t && t.tagName === 'SCRIPT') {
+      if (/\/app\.js(\?|$)/.test(t.src || '')) show(FAIL, 'load');
+    } else if (t === window) {
+      show(FAIL, 'boot');
+    }
+  }, true);
+  setTimeout(function () {
+    if (!window.__ahcheelyBooted && box.hidden) show(SLOW, 'boot');
+  }, 8000);
+})();
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
