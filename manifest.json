@@ -1,0 +1,15 @@
+{
+  "name": "أحچيلي",
+  "short_name": "أحچيلي",
+  "description": "منصة أسئلة وأجوبة اجتماعية عربية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFF5F8",
+  "theme_color": "#D81B60",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -3,23 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#c8102e">
+<meta name="theme-color" content="#D81B60">
+<meta name="description" content="أحچيلي — منصة أسئلة وأجوبة اجتماعية عربية">
 <title>أحچيلي</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="bar">
-  <a class="brand" href="#/">أحچيلي</a>
-  <span class="badge">نسخة تأسيسية</span>
+  <a class="brand" href="#/">
+    <img src="icon.svg" alt="" width="28" height="28">
+    <span>أحچيلي</span>
+  </a>
+  <div class="bar-actions" id="headerAction"></div>
 </header>
 <noscript><div class="mock">يتطلب أحچيلي تفعيل JavaScript.</div></noscript>
 <main id="view" tabindex="-1"></main>
-<nav class="tabs" id="tabs" aria-label="التنقل"></nav>
+<nav class="tabs" id="tabs" aria-label="التنقل الرئيسي"></nav>
 <div id="errbox" role="alert" hidden></div>
 <script>
 (function () {
   var box = document.getElementById('errbox');
-  var FAIL = 'تعذّر تشغيل التطبيق. تحقق من اتصالك وحدّث الصفحة، وإن استمر ذلك فحاول لاحقاً.';
+  var FAIL = 'تعذّر تشغيل التطبيق. تحقق من اتصالك وحدّث الصفحة.';
   var SLOW = 'التطبيق يتأخر عن المعتاد، وقد يكون اتصالك بطيئاً. إن استمر ذلك فحدّث الصفحة.';
   function show(text, kind) {
     if (!box.hidden && box.getAttribute('data-kind') !== 'boot') return;
@@ -38,6 +44,13 @@
     clearTimeout(timer);
     show(FAIL, 'load');
   });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (e) {
+        console.warn('[أحچيلي] تعذّر تسجيل عامل الخدمة', e);
+      });
+    });
+  }
 })();
 </script>
 </body>
