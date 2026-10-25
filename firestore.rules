@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// قواعد أحچيلي — المرحلة 1 (الحسابات والملفات الشخصية)
+// المبدأ: أقل صلاحية ممكنة، والرفض الافتراضي لكل ما لم يُسمح به صراحة.
+// النشر: Firebase Console ← Firestore Database ← Rules ← الصق هذا الملف ← Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ملف شخصي عام — تُخزَّن فيه حقول عامة فقط (لا بريد ولا بيانات خاصة).
+    match /users/{uid} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+             ['username', 'displayName', 'bio', 'location', 'interests',
+              'allowAnonQuestions', 'avatarUrl', 'coverUrl', 'createdAt'])
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 20
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 40
+        && (!('bio' in request.resource.data)
+             || (request.resource.data.bio is string && request.resource.data.bio.size() <= 280))
+        && (!('location' in request.resource.data)
+             || (request.resource.data.location is string && request.resource.data.location.size() <= 60))
+        && (!('interests' in request.resource.data)
+             || (request.resource.data.interests is list && request.resource.data.interests.size() <= 5));
+
+      // لا يمكن للعميل تغيير username أو createdAt أبداً.
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['displayName', 'bio', 'location', 'interests',
+                       'allowAnonQuestions', 'avatarUrl', 'coverUrl'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 40
+        && (!('bio' in request.resource.data)
+             || (request.resource.data.bio is string && request.resource.data.bio.size() <= 280))
+        && (!('interests' in request.resource.data)
+             || (request.resource.data.interests is list && request.resource.data.interests.size() <= 5));
+
+      // حذف الحساب يُدار لاحقاً عبر مسار موثوق، ليس من المتصفح.
+      allow delete: if false;
+    }
+
+    // حجز أسماء المستخدمين — يمنع التكرار والانتحال.
+    match /usernames/{name} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ملاحظة: كل مجموعة أخرى غير معرفة أعلاه مرفوضة تلقائياً (الافتراضي هو الرفض).
+  }
+}
