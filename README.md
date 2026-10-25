@@ -51,7 +51,7 @@
 | answers/{aid} | qid, questionText, isAnon, authorUid, authorUsername, text, status | قراءة عامة للمنشور فقط؛ إنشاء للمستلم بعد تحقق كامل؛ لا تحديث؛ حذف للمالك |
 | reports/{rid} | type, targetId, reason, byUid | إنشاء فقط (المراجعة في المرحلة 6) |
 
-* الحقلان fromUid/fromUsername غير موجودين إطلاقاً في الأسئلة المجهولة (أقوى مجهولية ممكنة: لا هوية عند任何 مستوى، ولا حتى للإدارة).
+* الحقلان fromUid/fromUsername غير موجودين إطلاقاً في الأسئلة المجهولة (أقوى مجهولية ممكنة: لا هوية عند أي مستوى، ولا حتى للإدارة).
 
 ## إعداد Firebase (مرة واحدة، من المتصفح فقط)
 1. `console.firebase.google.com` ← مشروع `ahcheely`.
