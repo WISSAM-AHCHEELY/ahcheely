@@ -3,8 +3,8 @@ import { db, auth } from './database.js';
 import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, runTransaction, serverTimestamp, query, where, orderBy, limit, startAfter, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 export const Q_MIN = 5;
-export const Q_MAX = 300;
-export const A_MAX = 1000;
+export const Q_MAX = 500;
+export const A_MAX = 2000;
 
 export function questionError(text) {
   const t = String(text || '').trim();

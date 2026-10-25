@@ -360,7 +360,7 @@ async function askFormScreen(username) {
   if (!target) return emptyState('لا يوجد مستخدم بهذا الاسم.', el('a', { class: 'btn ghost', text: 'رجوع', attrs: { href: '#/ask' } }));
   const allowsAnon = target.profile.allowAnonQuestions !== false;
   const isSelf = currentUser.uid === target.uid;
-  const ta = el('textarea', { class: 'ask-ta', attrs: { rows: '3', maxlength: '300', placeholder: 'اكتب سؤالك...' } });
+  const ta = el('textarea', { class: 'ask-ta', attrs: { rows: '4', maxlength: '500', placeholder: 'اكتب سؤالك...' } });
   const status = note('');
   status.hidden = true;
   let anonCb = null;
@@ -418,7 +418,7 @@ async function askFormScreen(username) {
 
 function openAnswerEditor(card, qid) {
   if (card.querySelector('.editor-wrap')) return;
-  const ta = el('textarea', { class: 'ans-ta', attrs: { rows: '3', maxlength: '1000', placeholder: 'اكتب إجابتك...' } });
+  const ta = el('textarea', { class: 'ans-ta', attrs: { rows: '4', maxlength: '2000', placeholder: 'اكتب إجابتك...' } });
   const status = note('');
   status.hidden = true;
   const wrap = el('div', { class: 'card editor-wrap' }, [

@@ -65,7 +65,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['content', 'isAnon', 'fromUid', 'fromUsername', 'status', 'createdAt'])
         && request.resource.data.content is string
         && request.resource.data.content.size() >= 5
-        && request.resource.data.content.size() <= 300
+        && request.resource.data.content.size() <= 500
         && request.resource.data.isAnon is bool
         && request.resource.data.status == 'pending'
         && request.resource.data.createdAt is timestamp
@@ -86,7 +86,7 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['status', 'readAt', 'answeredAt', 'answerId'])
-        && request.resource.data.status in ['pending', 'answered', 'ignored'];
+        && (!('status' in request.resource.data) || request.resource.data.status in ['pending', 'answered', 'ignored']);
 
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
@@ -105,16 +105,17 @@ service cloud.firestore {
         && request.resource.data.authorUsername == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username
         && request.resource.data.text is string
         && request.resource.data.text.size() >= 1
-        && request.resource.data.text.size() <= 1000
+        && request.resource.data.text.size() <= 2000
         && request.resource.data.questionText is string
         && request.resource.data.questionText.size() >= 5
-        && request.resource.data.questionText.size() <= 300
+        && request.resource.data.questionText.size() <= 500
         && request.resource.data.isAnon is bool
         && request.resource.data.status == 'published'
         && request.resource.data.qid is string
         && get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).exists()
         && request.resource.data.questionText == get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.content
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.answerId == null
+        && (!('answerId' in get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data)
+             || get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.answerId == null)
         && (
              (request.resource.data.isAnon == true
                && !('fromUid' in request.resource.data)

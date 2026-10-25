@@ -1,4 +1,4 @@
-const CACHE = 'ahcheely-v2';
+const CACHE = 'ahcheely-v3';
 const CORE = ['./', './index.html', './style.css', './ui.js', './avatars.js', './app.js', './auth.js', './database.js', './questions.js', './firebase-config.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', function (e) {
