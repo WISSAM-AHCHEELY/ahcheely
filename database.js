@@ -108,3 +108,8 @@ export async function updateMyProfile(uid, fields) {
     interests: parts
   });
 }
+
+// تفضيل استقبال الأسئلة المجهولة (قابل للتغيير من الإعدادات فقط لصاحب الملف).
+export async function updateAnonSetting(uid, value) {
+  await updateDoc(doc(db, 'users', uid), { allowAnonQuestions: !!value });
+}

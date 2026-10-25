@@ -1,5 +1,5 @@
-const CACHE = 'ahcheely-v1';
-const CORE = ['./', './index.html', './style.css', './ui.js', './avatars.js', './app.js', './auth.js', './database.js', './firebase-config.js', './manifest.json', './icon.svg'];
+const CACHE = 'ahcheely-v2';
+const CORE = ['./', './index.html', './style.css', './ui.js', './avatars.js', './app.js', './auth.js', './database.js', './questions.js', './firebase-config.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).catch(function () {}));

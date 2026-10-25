@@ -1,12 +1,12 @@
 rules_version = '2';
 
-// قواعد أحچيلي — المرحلة 1 (الحسابات والملفات الشخصية)
+// قواعد أحچيلي — المرحلة 2 (الحسابات + دورة السؤال والإجابة)
 // المبدأ: أقل صلاحية ممكنة، والرفض الافتراضي لكل ما لم يُسمح به صراحة.
-// النشر: Firebase Console ← Firestore Database ← Rules ← الصق هذا الملف ← Publish.
+// النشر: Firebase Console ← Firestore Database ← Rules ← الصق الملف ← Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ملف شخصي عام — تُخزَّن فيه حقول عامة فقط (لا بريد ولا بيانات خاصة).
+    // ==== الملف الشخصي العام (كما في المرحلة 1) ====
     match /users/{uid} {
       allow read: if true;
 
@@ -42,11 +42,10 @@ service cloud.firestore {
         && (!('interests' in request.resource.data)
              || (request.resource.data.interests is list && request.resource.data.interests.size() <= 5));
 
-      // حذف الحساب يُدار لاحقاً عبر مسار موثوق، ليس من المتصفح.
-      allow delete: if false;
+      allow delete: if false; // حذف الحساب لاحقاً عبر مسار موثوق.
     }
 
-    // حجز أسماء المستخدمين — يمنع التكرار والانتحال.
+    // ==== حجز أسماء المستخدمين ====
     match /usernames/{name} {
       allow read: if true;
       allow create: if request.auth != null
@@ -57,6 +56,99 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ملاحظة: كل مجموعة أخرى غير معرفة أعلاه مرفوضة تلقائياً (الافتراضي هو الرفض).
+    // ==== صندوق الوارد: خاص بالمستلم حصراً، ولا يظهر للعامة أبداً ====
+    // السؤال المجهول لا يحمل أي هوية للمرسل في أي حقل (أقوى خصوصية ممكنة).
+    match /users/{uid}/inbox/{qid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['content', 'isAnon', 'fromUid', 'fromUsername', 'status', 'createdAt'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() >= 5
+        && request.resource.data.content.size() <= 300
+        && request.resource.data.isAnon is bool
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt is timestamp
+        && (
+             (request.resource.data.isAnon == true
+               && !('fromUid' in request.resource.data)
+               && !('fromUsername' in request.resource.data)
+               && get(/databases/$(database)/documents/users/$(uid)).data.allowAnonQuestions == true)
+             ||
+             (request.resource.data.isAnon == false
+               && 'fromUid' in request.resource.data
+               && 'fromUsername' in request.resource.data
+               && request.resource.data.fromUid == request.auth.uid
+               && request.resource.data.fromUsername == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username)
+           );
+
+      // المستلم فقط يغيّر حالة السؤال (إجابة/تجاهل/إلغاء تجاهل) ووسمه مقروءاً.
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'readAt', 'answeredAt', 'answerId'])
+        && request.resource.data.status in ['pending', 'answered', 'ignored'];
+
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ==== الإجابات المنشورة — عامة فقط إذا كانت منشورة ====
+    match /answers/{aid} {
+      allow read: if resource.data.status == 'published'
+        || (request.auth != null && request.auth.uid == resource.data.authorUid);
+
+      // الإنشاء: لمستلم السؤال فقط، مع تحقق أن السؤال في صندوقه ولم يُجب عنه بعد،
+      // وأن نص السؤال منسوخ كما هو، وأن الهوية (مجهول/معلن) منقولة بأمانة.
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['qid', 'questionText', 'isAnon', 'fromUid', 'fromUsername',
+                                                 'authorUid', 'authorUsername', 'text', 'status', 'createdAt'])
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorUsername == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.questionText is string
+        && request.resource.data.questionText.size() >= 5
+        && request.resource.data.questionText.size() <= 300
+        && request.resource.data.isAnon is bool
+        && request.resource.data.status == 'published'
+        && request.resource.data.qid is string
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).exists()
+        && request.resource.data.questionText == get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.content
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.answerId == null
+        && (
+             (request.resource.data.isAnon == true
+               && !('fromUid' in request.resource.data)
+               && !('fromUsername' in request.resource.data))
+             ||
+             (request.resource.data.isAnon == false
+               && 'fromUid' in request.resource.data
+               && 'fromUsername' in request.resource.data
+               && request.resource.data.fromUid == get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.fromUid
+               && request.resource.data.fromUsername == get(/databases/$(database)/documents/users/$(request.auth.uid)/inbox/$(request.resource.data.qid)).data.fromUsername)
+           );
+
+      allow update: if false; // لا تعديل للإجابات بعد النشر.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorUid;
+    }
+
+    // ==== البلاغات: إنشاء فقط، والمراجعة البشرية في مرحلة الإشراف (6) ====
+    match /reports/{rid} {
+      allow read: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['type', 'targetId', 'reason', 'byUid', 'createdAt'])
+        && request.resource.data.byUid == request.auth.uid
+        && request.resource.data.type in ['user', 'question', 'answer', 'comment', 'message']
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() >= 1
+        && request.resource.data.targetId.size() <= 200
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() >= 1
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.createdAt is timestamp;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ملاحظة: كل مجموعة غير معرفة أعلاه مرفوضة تلقائياً (الافتراضي هو الرفض).
   }
 }
